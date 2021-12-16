@@ -1,29 +1,41 @@
 type Bag{
-
+    id:ID!
 }
 
 type Runner{
+    id:ID!
+}
 
+input RunnerInput{
+    id:ID!
 }
 
 type Task {
-
+    id:ID!
 }
 
 type Device{
-
+    id:ID!
 }
 
-type Mutation {
+input DeviceInput{
+    id:ID!
+}
 
+type LoginResult{
+    errorCode: Int
+    errorMessage: String
+}
+type Mutation {
+    login(device:DeviceInput, runner:RunnerInput): LoginResult
 }
 
 type Query{
-    getDevice():Device
+    getDevice(id:ID!): Device
     
 }
 
 schema {
-    type Query
-    type Mutation
+  query: Query
+  mutation: Mutation
 }
