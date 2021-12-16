@@ -1,0 +1,29 @@
+type Bag{
+
+}
+
+type Runner{
+
+}
+
+type Task {
+
+}
+
+type Device{
+
+}
+
+type Mutation {
+
+}
+
+type Query{
+    getDevice():Device
+    
+}
+
+schema {
+    type Query
+    type Mutation
+}

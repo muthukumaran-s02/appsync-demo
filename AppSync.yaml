@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  ParamProjectName:
+    Type: String
+  ParamSchema:
+    Type: String
+  ParamENV:
+    Type: String
+  ParamKeyExpiration:
+    Type: Number
+  ParamBagFunctionARN:
+    Type: String
+  ParamTaskFunctionARN:
+    Type: String
+  ParamRunnerFunctionARN:
+    Type: String
+  ParamTaskFunctionARN:
+    Type: String
+Resources:
+ Role:
+    Type: AWS::IAM::Role
+    Properties:
+      Name: LambdaInvokeRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: appsync.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: allow-access-to-lambda-from-appsync
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: lambda:invokeFunction
+                Resource:
+                  - !GetAtt [Lambda, Arn]
+                  - !Join ["", [!GetAtt [Lambda, Arn], ":*"]] #Allows access to all lambdas
+
+  AppSyncAPI:
+    Type: AWS::AppSync::GraphQLApi
+    Properties:
+      Name: !Join [-, [!Ref ParamProjectName, !Ref ParamENV]]
+      AuthenticationType: API_KEY
+
+  AppSyncSchema:
+    Type: AWS::AppSync::GraphQLSchema
+    Properties:
+      ApiId: !GetAtt [AppSyncAPI, ApiId]
+      Definition: !Ref ParamSchema
+
+  AppSyncDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !GetAtt [AppSyncAPI, ApiId]
+      Name: source
+      Type: AWS_LAMBDA
+      LambdaConfig:
+        LambdaFunctionArn: !GetAtt [Lambda, Arn]
+      ServiceRoleArn: !GetAtt [Role, Arn]
+
+  AppSyncResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt [AppSyncAPI, ApiId]
+      TypeName: Query
+      FieldName: Bag
+      DataSourceName: !GetAtt [AppSyncDataSource, Name]
+      RequestMappingTemplate: '{ "version" : "2017-02-28", "operation": "Invoke", "payload": $util.toJson($context.arguments) }'
+      ResponseMappingTemplate: "$util.toJson($context.result)"
+
+  AppSyncAPIKey:
+    Type: AWS::AppSync::ApiKey
+    Properties:
+      ApiId: !GetAtt [AppSyncAPI, ApiId]
+      Expires: !Ref ParamKeyExpiration
+
+
+
+Outputs:
+  APIKey:
+    Description: API Key
+    Value: !GetAtt [AppSyncAPIKey, ApiKey]
+
+  GraphQL:
+    Description: GraphQL URL
+    Value: !GetAtt [AppSyncAPI, GraphQLUrl]
