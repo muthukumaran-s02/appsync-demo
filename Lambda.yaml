@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameter:
+  DatabaseURL:
+    Type: String
+  DatabaseUserName:
+    Type: String
+  DatabasePassword:
+    Type: String
+  Env:
+    Type: String
+  QueueName:
+    Type: String  
+Resources:
+  BagFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: app.BagHandler
+      Runtime: dotnetcore3.1
+      Tracing: Active
+      Environment:
+        Variables:
+          Env: !Ref Env
+          DBUrl: !Ref DatabaseURL
+          DBUser: !Ref DatabaseUserName
+          DBPasswd: !Ref DatabasePassword
+          QueueName: !RefRunnerAssignmentQueue
+          
+  TaskFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: app.TaskHandler
+      Runtime: dotnetcore3.1
+      Tracing: Active
+      Environment:
+        Variables:
+          Env: !Ref Env
+          DBUrl: !Ref DatabaseURL
+          DBUser: !Ref DatabaseUserName
+          DBPasswd: !Ref DatabasePassword
+          QueueName: !Ref RunnerAssignmentQueue
+
+  DeviceFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: app.DeviceHandler
+      Runtime: dotnetcore3.1
+      Tracing: Active
+      Environment:
+        Variables:
+          Env: !Ref Env
+          DBUrl: !Ref DatabaseURL
+          DBUser: !Ref DatabaseUserName
+          DBPasswd: !Ref DatabasePassword
+
+  RunnerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: app.RunnerHandler
+      Runtime: dotnetcore3.1
+      Tracing: Active
+      Environment:
+        Variables:
+          Env: !Ref Env
+          DBUrl: !Ref DatabaseURL
+          DBUser: !Ref DatabaseUserName
+          DBPasswd: !Ref DatabasePassword
+
+  RunnerAssignmentQueue:
+    Type: AWS::SQS::Queue
+    Properties: 
+      FifoQueue: false
+      MessageRetentionPeriod: 86400
+      QueueName: !Ref QueueName
